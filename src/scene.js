@@ -77,14 +77,55 @@ loader.load(
           child.material.color = new THREE.Color(0x00ff00); // Example: Green
         }
       }
-      draggableObjects.push(gltf.scene);
     });
 
+    console.log(gltf.scene);
+
     // Initialize OrbitControls
-    // orbitControls = new OrbitControls(camera, renderer.domElement);
-    // orbitControls.enableDamping = true; // Optional for smoother orbiting
+    orbitControls = new OrbitControls(camera, renderer.domElement);
+    orbitControls.enableDamping = true; // Optional for smoother orbiting
 
     scene.add(gltf.scene);
+    const bottle = gltf.scene.getObjectByName("Beer Bottle");
+
+    if (!bottle) {
+      return;
+    }
+
+    // Initialize DragControls (initially disabled)
+    dragControls = new DragControls(
+      [...draggableObjects],
+      camera,
+      renderer.domElement
+    );
+
+    // Event listener to enable/disable DragControls on a key press (e.g., 'Shift')
+    window.addEventListener("keydown", function (event) {
+      if (event.key === "Shift") {
+        dragControls.enabled = true;
+        orbitControls.enabled = false;
+        renderer.domElement.style.cursor = "grab"; // Indicate dragging is active
+      }
+    });
+
+    window.addEventListener("keyup", function (event) {
+      if (event.key === "Shift") {
+        dragControls.enabled = false;
+        orbitControls.enabled = true;
+        renderer.domElement.style.cursor = "default"; // Reset cursor
+      }
+    });
+
+    // Optional: Drag event listeners (as in your previous example)
+    dragControls.addEventListener("dragstart", function (event) {
+      event.object.material.emissiveIntensity = 0.5;
+      orbitControls.enabled = false; // Disable OrbitControls while dragging
+    });
+
+    dragControls.addEventListener("dragend", function (event) {
+      event.object.material.emissiveIntensity = 0;
+      orbitControls.enabled = true; // Re-enable OrbitControls after dragging
+    });
   },
   undefined,
   function (error) {
@@ -100,41 +141,6 @@ function animate() {
 renderer.setAnimationLoop(animate);
 
 //? Dragcontrols
-
-// Initialize DragControls (initially disabled)
-dragControls = new DragControls(
-  [...draggableObjects],
-  camera,
-  renderer.domElement
-);
-
-// Event listener to enable/disable DragControls on a key press (e.g., 'Shift')
-window.addEventListener("keydown", function (event) {
-  if (event.key === "Shift") {
-    // dragControls.enabled = true;
-    // orbitControls.enabled = false;
-    renderer.domElement.style.cursor = "grab"; // Indicate dragging is active
-  }
-});
-
-window.addEventListener("keyup", function (event) {
-  if (event.key === "Shift") {
-    dragControls.enabled = false;
-    // orbitControls.enabled = true;
-    renderer.domElement.style.cursor = "default"; // Reset cursor
-  }
-});
-
-// Optional: Drag event listeners (as in your previous example)
-dragControls.addEventListener("dragstart", function (event) {
-  event.object.material.emissiveIntensity = 0.5;
-  orbitControls.enabled = false; // Disable OrbitControls while dragging
-});
-
-dragControls.addEventListener("dragend", function (event) {
-  event.object.material.emissiveIntensity = 0;
-  orbitControls.enabled = true; // Re-enable OrbitControls after dragging
-});
 
 //* Load table
 loader.load(
