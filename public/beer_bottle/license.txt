@@ -1,0 +1,11 @@
+Model Information:
+* title:	Beer Bottle
+* source:	https://sketchfab.com/3d-models/beer-bottle-833ef9cea519454fb1d249154b830f04
+* author:	mrxa (https://sketchfab.com/mrxa)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Beer Bottle" (https://sketchfab.com/3d-models/beer-bottle-833ef9cea519454fb1d249154b830f04) by mrxa (https://sketchfab.com/mrxa) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
