@@ -20,7 +20,7 @@ const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(geometry, material);
 // scene.add(cube);
 
-camera.position.set(20, 20, 30);
+camera.position.set(0, 80, 150);
 // camera.position.z = 5;
 
 //? Grid helper
@@ -40,13 +40,13 @@ scene.add(light);
 
 const pointingLight = new THREE.PointLight(0xffffff);
 
-pointingLight.position.set(20, 0, 0);
+pointingLight.position.set(0, 80, 150);
 
 scene.add(pointingLight);
 
 //? Control
 
-const controls = new OrbitControls(camera, renderer.domElement);
+// const controls = new OrbitControls(camera, renderer.domElement);
 
 //? Model
 const loader = new GLTFLoader();
@@ -77,55 +77,56 @@ loader.load(
           child.material.color = new THREE.Color(0x00ff00); // Example: Green
         }
       }
-    });
 
-    console.log(gltf.scene);
+      child.userData.draggable = true;
+      child.userData.name = "BOTTLE";
+    });
 
     // Initialize OrbitControls
-    orbitControls = new OrbitControls(camera, renderer.domElement);
-    orbitControls.enableDamping = true; // Optional for smoother orbiting
+    // orbitControls = new OrbitControls(camera, renderer.domElement);
+    // orbitControls.enableDamping = true; // Optional for smoother orbiting
 
     scene.add(gltf.scene);
-    const bottle = gltf.scene.getObjectByName("Beer Bottle");
+    // const bottle = gltf.scene.getObjectByName("Beer Bottle");
 
-    if (!bottle) {
-      return;
-    }
+    // if (!bottle) {
+    //   return;
+    // }
 
-    // Initialize DragControls (initially disabled)
-    dragControls = new DragControls(
-      [...draggableObjects],
-      camera,
-      renderer.domElement
-    );
+    // // Initialize DragControls (initially disabled)
+    // dragControls = new DragControls(
+    //   [...draggableObjects],
+    //   camera,
+    //   renderer.domElement
+    // );
 
-    // Event listener to enable/disable DragControls on a key press (e.g., 'Shift')
-    window.addEventListener("keydown", function (event) {
-      if (event.key === "Shift") {
-        dragControls.enabled = true;
-        orbitControls.enabled = false;
-        renderer.domElement.style.cursor = "grab"; // Indicate dragging is active
-      }
-    });
+    // // Event listener to enable/disable DragControls on a key press (e.g., 'Shift')
+    // window.addEventListener("keydown", function (event) {
+    //   if (event.key === "Shift") {
+    //     dragControls.enabled = true;
+    //     orbitControls.enabled = false;
+    //     renderer.domElement.style.cursor = "grab"; // Indicate dragging is active
+    //   }
+    // });
 
-    window.addEventListener("keyup", function (event) {
-      if (event.key === "Shift") {
-        dragControls.enabled = false;
-        orbitControls.enabled = true;
-        renderer.domElement.style.cursor = "default"; // Reset cursor
-      }
-    });
+    // window.addEventListener("keyup", function (event) {
+    //   if (event.key === "Shift") {
+    //     dragControls.enabled = false;
+    //     orbitControls.enabled = true;
+    //     renderer.domElement.style.cursor = "default"; // Reset cursor
+    //   }
+    // });
 
-    // Optional: Drag event listeners (as in your previous example)
-    dragControls.addEventListener("dragstart", function (event) {
-      event.object.material.emissiveIntensity = 0.5;
-      orbitControls.enabled = false; // Disable OrbitControls while dragging
-    });
+    // // Optional: Drag event listeners (as in your previous example)
+    // dragControls.addEventListener("dragstart", function (event) {
+    //   event.object.material.emissiveIntensity = 0.5;
+    //   orbitControls.enabled = false; // Disable OrbitControls while dragging
+    // });
 
-    dragControls.addEventListener("dragend", function (event) {
-      event.object.material.emissiveIntensity = 0;
-      orbitControls.enabled = true; // Re-enable OrbitControls after dragging
-    });
+    // dragControls.addEventListener("dragend", function (event) {
+    //   event.object.material.emissiveIntensity = 0;
+    //   orbitControls.enabled = true; // Re-enable OrbitControls after dragging
+    // });
   },
   undefined,
   function (error) {
@@ -134,6 +135,7 @@ loader.load(
 );
 
 function animate() {
+  dragObject();
   renderer.render(scene, camera);
   // cube.rotation.x += 0.01;
   // cube.rotation.y += 0.01;
@@ -146,6 +148,11 @@ renderer.setAnimationLoop(animate);
 loader.load(
   "public/table/scene.gltf",
   function (gltf) {
+    gltf.scene.traverse(function (child) {
+      child.userData.ground = true;
+      child.userData.name = "TABLE";
+    });
+
     gltf.scene.position.set(0, -100, 0);
     scene.add(gltf.scene);
   },
@@ -154,3 +161,52 @@ loader.load(
     console.error(error);
   }
 );
+
+//? Raycaster
+
+const raycaster = new THREE.Raycaster();
+const clickMouse = new THREE.Vector2();
+const moveMouse = new THREE.Vector2();
+var draggable;
+
+window.addEventListener("click", (e) => {
+  if (draggable) {
+    draggable = null;
+    return;
+  }
+
+  clickMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  clickMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(clickMouse, camera);
+  const intersects = raycaster.intersectObjects(scene.children);
+
+  if (intersects.length > 0 && intersects[0].object.userData.draggable) {
+    draggable = intersects[0].object;
+
+    console.log(`found draggable ${draggable.userData.name}`);
+  }
+});
+
+window.addEventListener("mousemove", (e) => {
+  moveMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  moveMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+function dragObject() {
+  if (draggable != null) {
+    console.log(draggable);
+    raycaster.setFromCamera(moveMouse, camera);
+    const intersects = raycaster.intersectObjects(scene.children);
+
+    if (intersects.length > 0) {
+      for (let element of intersects) {
+        if (!element.object.userData.ground) continue;
+
+        draggable.position.x = element.point.x;
+        draggable.position.z = element.point.z;
+        draggable.position.y = element.point.y;
+      }
+    }
+  }
+}
