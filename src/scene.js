@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { DragControls } from "three/addons/controls/DragControls.js";
 
 const scene = new THREE.Scene();
@@ -35,24 +36,21 @@ scene.add(gridHelper);
 
 const color = 0xffffff;
 const intensity = 1;
-const light = new THREE.AmbientLight(color, intensity);
-scene.add(light);
+// Create an AmbientLight
+const ambientLight = new THREE.AmbientLight(0xf1f1f1); // Soft white light
 
-const pointingLight = new THREE.PointLight(0xffffff);
-
-pointingLight.position.set(0, 80, 150);
-
-scene.add(pointingLight);
+// Add it to the scene
+scene.add(ambientLight);
 
 //? Control
 
-// const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 
 //? Model
-const loader = new GLTFLoader();
+const objLoader = new OBJLoader();
+const gltfLoader = new GLTFLoader();
 
 let draggableObjects = [];
-let dragControls;
 let orbitControls;
 
 // const nonDraggableObject = new THREE.Mesh(
@@ -63,70 +61,28 @@ let orbitControls;
 // scene.add(nonDraggableObject);
 
 //* Load bottle
-loader.load(
-  "public/beer_bottle/scene.gltf",
-  function (gltf) {
-    gltf.scene.traverse(function (child) {
-      if (child.isMesh) {
-        // Access the material and change its color
-        if (Array.isArray(child.material)) {
-          child.material.forEach((material) => {
-            material.color = new THREE.Color(0xff0000); // Example: Red
-          });
-        } else {
-          child.material.color = new THREE.Color(0x00ff00); // Example: Green
-        }
-      }
+objLoader.load(
+  "public/bottle_obj/beer bottle.obj",
+  function (obj) {
+    scene.add(obj);
 
-      child.userData.draggable = true;
-      child.userData.name = "BOTTLE";
+    // 3. Initialize DragControls after the object is loaded
+    const dragControls = new DragControls([obj], camera, renderer.domElement);
+
+    // Optional: Add event listeners for drag start and end
+    dragControls.addEventListener("dragstart", function (event) {
+      console.log(event.object.name);
+
+      // Disable camera controls if you have them
+      // if (controls) controls.enabled = false;
+      console.log("Dragging started:", event.object.name || "Object");
     });
 
-    // Initialize OrbitControls
-    // orbitControls = new OrbitControls(camera, renderer.domElement);
-    // orbitControls.enableDamping = true; // Optional for smoother orbiting
-
-    scene.add(gltf.scene);
-    // const bottle = gltf.scene.getObjectByName("Beer Bottle");
-
-    // if (!bottle) {
-    //   return;
-    // }
-
-    // // Initialize DragControls (initially disabled)
-    // dragControls = new DragControls(
-    //   [...draggableObjects],
-    //   camera,
-    //   renderer.domElement
-    // );
-
-    // // Event listener to enable/disable DragControls on a key press (e.g., 'Shift')
-    // window.addEventListener("keydown", function (event) {
-    //   if (event.key === "Shift") {
-    //     dragControls.enabled = true;
-    //     orbitControls.enabled = false;
-    //     renderer.domElement.style.cursor = "grab"; // Indicate dragging is active
-    //   }
-    // });
-
-    // window.addEventListener("keyup", function (event) {
-    //   if (event.key === "Shift") {
-    //     dragControls.enabled = false;
-    //     orbitControls.enabled = true;
-    //     renderer.domElement.style.cursor = "default"; // Reset cursor
-    //   }
-    // });
-
-    // // Optional: Drag event listeners (as in your previous example)
-    // dragControls.addEventListener("dragstart", function (event) {
-    //   event.object.material.emissiveIntensity = 0.5;
-    //   orbitControls.enabled = false; // Disable OrbitControls while dragging
-    // });
-
-    // dragControls.addEventListener("dragend", function (event) {
-    //   event.object.material.emissiveIntensity = 0;
-    //   orbitControls.enabled = true; // Re-enable OrbitControls after dragging
-    // });
+    dragControls.addEventListener("dragend", function (event) {
+      // Enable camera controls if you have them
+      // if (controls) controls.enabled = true;
+      console.log("Dragging ended:", event.object.name || "Object");
+    });
   },
   undefined,
   function (error) {
@@ -135,24 +91,21 @@ loader.load(
 );
 
 function animate() {
-  dragObject();
+  requestAnimationFrame(animate);
   renderer.render(scene, camera);
+  renderer.setClearColor(0xffffff);
   // cube.rotation.x += 0.01;
   // cube.rotation.y += 0.01;
 }
-renderer.setAnimationLoop(animate);
+
+animate();
 
 //? Dragcontrols
 
 //* Load table
-loader.load(
+gltfLoader.load(
   "public/table/scene.gltf",
   function (gltf) {
-    gltf.scene.traverse(function (child) {
-      child.userData.ground = true;
-      child.userData.name = "TABLE";
-    });
-
     gltf.scene.position.set(0, -100, 0);
     scene.add(gltf.scene);
   },
@@ -162,51 +115,45 @@ loader.load(
   }
 );
 
-//? Raycaster
+// gltfLoader.load(
+//   "public/plastic_bottle/scene.gltf",
+//   function (gltf) {
+//     // draggableObjects.push(gltf.scene);
+//     console.log(gltf.scene);
 
-const raycaster = new THREE.Raycaster();
-const clickMouse = new THREE.Vector2();
-const moveMouse = new THREE.Vector2();
-var draggable;
+//     scene.add(gltf.scene);
+//   },
+//   undefined,
+//   function (error) {
+//     console.error(error);
+//   }
+// );
 
-window.addEventListener("click", (e) => {
-  if (draggable) {
-    draggable = null;
-    return;
-  }
+// 3. Initialize DragControls after the object is loaded
+const dragControls = new DragControls(
+  draggableObjects,
+  camera,
+  renderer.domElement
+);
 
-  clickMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  clickMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+// Optional: Add event listeners for drag start and end
+dragControls.addEventListener("dragstart", function (event) {
+  console.log(event.object.name);
 
-  raycaster.setFromCamera(clickMouse, camera);
-  const intersects = raycaster.intersectObjects(scene.children);
-
-  if (intersects.length > 0 && intersects[0].object.userData.draggable) {
-    draggable = intersects[0].object;
-
-    console.log(`found draggable ${draggable.userData.name}`);
-  }
+  // Disable camera controls if you have them
+  // if (controls) controls.enabled = false;
+  console.log("Dragging started:", event.object.name || "Object");
 });
 
-window.addEventListener("mousemove", (e) => {
-  moveMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  moveMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+dragControls.addEventListener("dragend", function (event) {
+  // Enable camera controls if you have them
+  // if (controls) controls.enabled = true;
+  console.log("Dragging ended:", event.object.name || "Object");
 });
 
-function dragObject() {
-  if (draggable != null) {
-    console.log(draggable);
-    raycaster.setFromCamera(moveMouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children);
-
-    if (intersects.length > 0) {
-      for (let element of intersects) {
-        if (!element.object.userData.ground) continue;
-
-        draggable.position.x = element.point.x;
-        draggable.position.z = element.point.z;
-        draggable.position.y = element.point.y;
-      }
-    }
-  }
-}
+// 5. Handle window resizing (same as before)
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});

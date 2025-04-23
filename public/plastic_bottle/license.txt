@@ -1,0 +1,8 @@
+Model Information:
+* title:	Simple Plastic Bottle
+* source:	https://sketchfab.com/3d-models/simple-plastic-bottle-43d8847bb7a5432fbcda161c276f4bd5
+* author:	mxdarkside (https://sketchfab.com/mxdarkside)
+
+Model License:
+* license type:	SKETCHFAB Standard (https://sketchfab.com/licenses)
+* requirements:	Under basic restrictions, use worldwide, on all types of media, commercially or not, and in all types of derivative works
