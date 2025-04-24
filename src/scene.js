@@ -29,8 +29,8 @@ camera.position.set(0, 80, 150);
 const size = 300;
 const divisions = 30;
 
-const gridHelper = new THREE.GridHelper(size, divisions);
-scene.add(gridHelper);
+// const gridHelper = new THREE.GridHelper(size, divisions);
+// scene.add(gridHelper);
 
 //? Light
 
@@ -61,34 +61,34 @@ let orbitControls;
 // scene.add(nonDraggableObject);
 
 //* Load bottle
-objLoader.load(
-  "public/bottle_obj/beer bottle.obj",
-  function (obj) {
-    scene.add(obj);
+// objLoader.load(
+//   "public/bottle_obj/beer bottle.obj",
+//   function (obj) {
+//     scene.add(obj);
 
-    // 3. Initialize DragControls after the object is loaded
-    const dragControls = new DragControls([obj], camera, renderer.domElement);
+//     // 3. Initialize DragControls after the object is loaded
+//     const dragControls = new DragControls([obj], camera, renderer.domElement);
 
-    // Optional: Add event listeners for drag start and end
-    dragControls.addEventListener("dragstart", function (event) {
-      console.log(event.object.name);
+//     // Optional: Add event listeners for drag start and end
+//     dragControls.addEventListener("dragstart", function (event) {
+//       console.log(event.object.name);
 
-      // Disable camera controls if you have them
-      // if (controls) controls.enabled = false;
-      console.log("Dragging started:", event.object.name || "Object");
-    });
+//       // Disable camera controls if you have them
+//       // if (controls) controls.enabled = false;
+//       console.log("Dragging started:", event.object.name || "Object");
+//     });
 
-    dragControls.addEventListener("dragend", function (event) {
-      // Enable camera controls if you have them
-      // if (controls) controls.enabled = true;
-      console.log("Dragging ended:", event.object.name || "Object");
-    });
-  },
-  undefined,
-  function (error) {
-    console.error(error);
-  }
-);
+//     dragControls.addEventListener("dragend", function (event) {
+//       // Enable camera controls if you have them
+//       // if (controls) controls.enabled = true;
+//       console.log("Dragging ended:", event.object.name || "Object");
+//     });
+//   },
+//   undefined,
+//   function (error) {
+//     console.error(error);
+//   }
+// );
 
 function animate() {
   requestAnimationFrame(animate);
@@ -115,19 +115,52 @@ gltfLoader.load(
   }
 );
 
-// gltfLoader.load(
-//   "public/plastic_bottle/scene.gltf",
-//   function (gltf) {
-//     // draggableObjects.push(gltf.scene);
-//     console.log(gltf.scene);
+gltfLoader.load(
+  "public/plastic_bottle/scene.gltf",
+  function (gltf) {
+    const model = gltf.scene;
 
-//     scene.add(gltf.scene);
-//   },
-//   undefined,
-//   function (error) {
-//     console.error(error);
-//   }
-// );
+    // Traverse all materials in the model
+    model.traverse((node) => {
+      if (node.isMesh && node.material) {
+        // Check if the material is an array (for multi-materials)
+        const materials = Array.isArray(node.material)
+          ? node.material
+          : [node.material];
+
+        materials.forEach((material) => {
+          // If the material has a color property (e.g., MeshStandardMaterial, MeshBasicMaterial)
+          if (material.color) {
+            material.color.set(0xff0000); // Change to red (you can use any valid color value)
+          }
+          // For materials with emissive properties
+          if (material.emissive) {
+            material.emissive.set(0x0000ff); // Change emissive color to blue
+          }
+        });
+      }
+    });
+
+    model.scale.set(100, 100, 100);
+
+    gltf.scene.position.set(0, 0, 0);
+
+    draggableObjects.push(model);
+
+    scene.add(gltf.scene);
+  },
+  undefined,
+  function (error) {
+    console.error(error);
+  }
+);
+
+const minX = -1.1; // Minimum X-coordinate
+const maxX = 1.1; // Maximum X-coordinate
+const minY = 0; // Minimum Y-coordinate
+const maxY = 0; // Maximum Y-coordinate
+const minZ = -0.02; // Minimum Z-coordinate
+const maxZ = 0.4; // Maximum Z-coordinate
 
 // 3. Initialize DragControls after the object is loaded
 const dragControls = new DragControls(
@@ -141,13 +174,22 @@ dragControls.addEventListener("dragstart", function (event) {
   console.log(event.object.name);
 
   // Disable camera controls if you have them
-  // if (controls) controls.enabled = false;
+  if (controls) controls.enabled = false;
   console.log("Dragging started:", event.object.name || "Object");
+});
+// Optional: Add event listeners for drag start and end
+dragControls.addEventListener("drag", function (event) {
+  const object = event.object;
+  console.log(object.position);
+
+  object.position.x = Math.max(minX, Math.min(maxX, object.position.x));
+  object.position.y = Math.max(minY, Math.min(maxY, object.position.y));
+  object.position.z = Math.max(minZ, Math.min(maxZ, object.position.z));
 });
 
 dragControls.addEventListener("dragend", function (event) {
   // Enable camera controls if you have them
-  // if (controls) controls.enabled = true;
+  if (controls) controls.enabled = true;
   console.log("Dragging ended:", event.object.name || "Object");
 });
 
