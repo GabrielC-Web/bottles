@@ -15,7 +15,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-camera.position.set(0, 80, 150);
+camera.position.set(0, 140, 150);
 
 //? Grid helper
 
@@ -66,8 +66,9 @@ function animate() {
   renderer.setClearColor(0xffffff);
 }
 
-loadBottle();
+// loadBottle();
 loadTable();
+distributeBottles();
 setDragControls();
 animate();
 
@@ -78,7 +79,7 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-function loadBottle() {
+function loadBottle(bottle) {
   gltfLoader.load(
     "public/plastic_bottle/scene.gltf",
     function (gltf) {
@@ -95,18 +96,25 @@ function loadBottle() {
           materials.forEach((material) => {
             // If the material has a color property (e.g., MeshStandardMaterial, MeshBasicMaterial)
             if (material.color) {
-              material.color.set(0xff0000); // Change to red (you can use any valid color value)
+              material.color.set(bottle.color); // Change to red (you can use any valid color value)
             }
             // For materials with emissive properties
             if (material.emissive) {
-              material.emissive.set(0x0000ff); // Change emissive color to blue
+              material.emissive.set(bottle.color); // Change emissive color to blue
             }
           });
-          node.position.x = -0.5;
+
+          //* Oculto la tapa
+          if (node.userData.name == "Bottle_Bottle2_0") {
+            node.visible = false;
+          }
+
+          //* Seteo la posición inicial
+          node.position.x = bottle.position.x;
         }
       });
 
-      model.scale.set(100, 100, 100);
+      model.scale.set(150, 150, 150);
 
       draggableObjects.push(model);
 
@@ -165,5 +173,34 @@ function setDragControls() {
     // Enable camera controls if you have them
     if (controls) controls.enabled = true;
     console.log("Dragging ended:", event.object.name || "Object");
+  });
+}
+
+function distributeBottles() {
+  const bottles = [
+    {
+      position: { x: -0.4, y: 0, z: 0 },
+      color: "#0011FF",
+    },
+    {
+      position: { x: -0.2, y: 0, z: 0 },
+      color: "#15FF00",
+    },
+    {
+      position: { x: -0.0, y: 0, z: 0 },
+      color: "#FDFF00",
+    },
+    {
+      position: { x: 0.2, y: 0, z: 0 },
+      color: "#FF9A00",
+    },
+    {
+      position: { x: 0.4, y: 0, z: 0 },
+      color: "#FF0000",
+    },
+  ];
+
+  bottles.forEach((bottle) => {
+    loadBottle(bottle);
   });
 }
