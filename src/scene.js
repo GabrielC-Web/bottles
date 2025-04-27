@@ -4,23 +4,32 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DragControls } from "three/addons/controls/DragControls.js";
 
 const scene = new THREE.Scene();
+
+//? Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x0000000);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+//? Camera
 const camera = new THREE.PerspectiveCamera(
-  50,
+  45,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
 camera.position.set(-97.50289274085992, 147.53651249900219, 456.95360079934767);
 camera.rotation.set(
   -0.3116052508897749,
   0.019850784858688877,
   0.006393398664596768
 );
+
+camera.lookAt(0, 0, 0);
 
 //? Grid helper
 
@@ -34,8 +43,20 @@ const divisions = 30;
 // Create an AmbientLight
 const ambientLight = new THREE.AmbientLight(0xf1f1f1); // Soft white light
 
+const spotLight = new THREE.SpotLight(0xffffff, 80000, 1000, 2, 1);
+spotLight.position.set(-100, 150, 0);
+spotLight.castShadow = true;
+// spotLight.shadow.bias = -0.0001;
+scene.add(spotLight, ambientLight);
+
+//? helper
+
+const lightHelper = new THREE.PointLightHelper(spotLight);
+
+// scene.add(lightHelper);
+
 // Add it to the scene
-scene.add(ambientLight);
+// scene.add(ambientLight);
 
 //? Model
 const gltfLoader = new GLTFLoader();
@@ -43,6 +64,8 @@ const gltfLoader = new GLTFLoader();
 //? Control
 
 const controls = new OrbitControls(camera, renderer.domElement);
+
+// controls.enabled = false;
 
 //* Importante para cambiar el centro de la animación
 controls.target.set(
@@ -66,10 +89,10 @@ let bottles = [];
 //* Límites de movimiento de las botellas
 
 let minX = -1.6; // Minimum X-coordinate
-let maxX = -0.87; // Maximum X-coordinate
+let maxX = -0.6; // Maximum X-coordinate
 let minY = 0; // Minimum Y-coordinate
 let maxY = 0; // Maximum Y-coordinate
-let minZ = -1; // Minimum Z-coordinate
+let minZ = -0.66; // Minimum Z-coordinate
 let maxZ = 0.4; // Maximum Z-coordinate
 
 // 3. Initialize DragControls after the object is loaded
@@ -81,23 +104,22 @@ const dragControls = new DragControls(
 
 //? Raycasting
 
-const raycaster = new THREE.Raycaster();
-const origin = new THREE.Vector3(0, 0, 0); // Position to check
-const direction = new THREE.Vector3(0, 0, -1); // Adjust direction if needed
-direction.normalize();
+// const raycaster = new THREE.Raycaster();
+// const origin = new THREE.Vector3(0, 0, 0); // Position to check
+// const direction = new THREE.Vector3(0, 0, -1); // Adjust direction if needed
+// direction.normalize();
 
-raycaster.set(origin, direction);
+// raycaster.set(origin, direction);
 
-const intersectedObjects = raycaster.intersectObjects(scene.children);
+// const intersectedObjects = raycaster.intersectObjects(scene.children);
 
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
-  renderer.setClearColor(0xffffff);
 }
 
-// loadBottle();
+loadPlane();
 loadTable();
 distributeBottles();
 setDragControls();
@@ -109,6 +131,22 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+function loadPlane() {
+  const groundGeometry = new THREE.PlaneGeometry(500, 200, 32, 32);
+  const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0x555555,
+    side: THREE.DoubleSide,
+  });
+  groundGeometry.rotateX(-Math.PI / 2);
+  const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+
+  groundMesh.castShadow = false;
+  groundMesh.receiveShadow = true;
+
+  groundMesh.position.set(-100, -100, 0);
+  scene.add(groundMesh);
+}
 
 function loadBottle(bottle) {
   gltfLoader.load(
@@ -123,6 +161,9 @@ function loadBottle(bottle) {
           const materials = Array.isArray(node.material)
             ? node.material
             : [node.material];
+
+          node.castShadow = true;
+          node.receiveShadow = true;
 
           materials.forEach((material) => {
             // If the material has a color property (e.g., MeshStandardMaterial, MeshBasicMaterial)
@@ -170,6 +211,13 @@ function loadTable() {
   gltfLoader.load(
     "public/table/scene.gltf",
     function (gltf) {
+      gltf.scene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
       gltf.scene.position.set(0, -100, 0);
       scene.add(gltf.scene);
     },
@@ -207,12 +255,12 @@ function setDragControls() {
 function distributeBottles() {
   bottles = [
     {
-      position: { x: -1.6, y: 0, z: -1 },
+      position: { x: -1.6, y: 0, z: -0.66 },
       color: "#0011FF",
       name: "blue",
     },
     {
-      position: { x: -1.45, y: 0, z: -1 },
+      position: { x: -1.45, y: 0, z: -0.66 },
       color: "#15FF00",
       name: "green",
     },
@@ -220,18 +268,18 @@ function distributeBottles() {
       position: {
         x: -1.3,
         y: 0,
-        z: -1,
+        z: -0.66,
       },
       color: "#FDFF00",
       name: "yellow",
     },
     {
-      position: { x: -1.15, y: 0, z: -1 },
+      position: { x: -1.15, y: 0, z: -0.66 },
       color: "#FF9A00",
       name: "orange",
     },
     {
-      position: { x: -1, y: 0, z: -1 },
+      position: { x: -1, y: 0, z: -0.66 },
       color: "#FF0000",
       name: "red",
     },
@@ -249,6 +297,8 @@ function calculatePositions(object) {
     object.userData.name.includes(bottle.name)
   );
 
+  console.log(object.position);
+
   bottles[movedBottleIndex].position.x = object.position.x;
   bottles[movedBottleIndex].position.y = object.position.y;
   bottles[movedBottleIndex].position.z = object.position.z;
@@ -262,7 +312,7 @@ function limitPositions(position) {
   if (position.z < -0.01) {
     maxX = -0.87;
   } else {
-    maxX = 1.8;
+    maxX = 0.6;
   }
 }
 
