@@ -5,7 +5,7 @@ import { DragControls } from "three/addons/controls/DragControls.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  75,
+  50,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
@@ -15,7 +15,12 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-camera.position.set(0, 140, 150);
+camera.position.set(-97.50289274085992, 147.53651249900219, 456.95360079934767);
+camera.rotation.set(
+  -0.3116052508897749,
+  0.019850784858688877,
+  0.006393398664596768
+);
 
 //? Grid helper
 
@@ -39,8 +44,33 @@ const gltfLoader = new GLTFLoader();
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
+//* Importante para cambiar el centro de la animación
+controls.target.set(
+  -105.78837752605038,
+  8.963502694206033,
+  -21.383158308688806
+);
+
+controls.addEventListener("change", () => {
+  // This function will be called whenever the camera or target changes
+  // console.log("Camera position:", camera.position);
+  // console.log("Camera rotation:", camera.rotation);
+  // Perform actions based on the updated camera or target
+});
+
 //? Dragcontrols
 let draggableObjects = [];
+
+let bottles = [];
+
+//* Límites de movimiento de las botellas
+
+let minX = -1.6; // Minimum X-coordinate
+let maxX = -0.87; // Maximum X-coordinate
+let minY = 0; // Minimum Y-coordinate
+let maxY = 0; // Maximum Y-coordinate
+let minZ = -1; // Minimum Z-coordinate
+let maxZ = 0.4; // Maximum Z-coordinate
 
 // 3. Initialize DragControls after the object is loaded
 const dragControls = new DragControls(
@@ -62,6 +92,7 @@ const intersectedObjects = raycaster.intersectObjects(scene.children);
 
 function animate() {
   requestAnimationFrame(animate);
+  controls.update();
   renderer.render(scene, camera);
   renderer.setClearColor(0xffffff);
 }
@@ -107,12 +138,18 @@ function loadBottle(bottle) {
           //* Oculto la tapa
           if (node.userData.name == "Bottle_Bottle2_0") {
             node.visible = false;
+          } else {
+            node.userData.name = `bottle_${bottle.name}`;
           }
 
           //* Seteo la posición inicial
           node.position.x = bottle.position.x;
+          node.position.y = bottle.position.y;
+          node.position.z = bottle.position.z;
         }
       });
+
+      model.userData.name = `bottle_${bottle.name}`;
 
       model.scale.set(150, 150, 150);
 
@@ -144,25 +181,16 @@ function loadTable() {
 }
 
 function setDragControls() {
-  const minX = -1.1; // Minimum X-coordinate
-  const maxX = 1.1; // Maximum X-coordinate
-  const minY = 0; // Minimum Y-coordinate
-  const maxY = 0; // Maximum Y-coordinate
-  const minZ = -0.02; // Minimum Z-coordinate
-  const maxZ = 0.4; // Maximum Z-coordinate
-
   // Optional: Add event listeners for drag start and end
   dragControls.addEventListener("dragstart", function (event) {
-    console.log(event.object.name);
-
     // Disable camera controls if you have them
     if (controls) controls.enabled = false;
-    console.log("Dragging started:", event.object.name || "Object");
   });
   // Optional: Add event listeners for drag start and end
   dragControls.addEventListener("drag", function (event) {
     const object = event.object;
-    console.log(object.position);
+
+    limitPositions(object.position);
 
     object.position.x = Math.max(minX, Math.min(maxX, object.position.x));
     object.position.y = Math.max(minY, Math.min(maxY, object.position.y));
@@ -172,35 +200,83 @@ function setDragControls() {
   dragControls.addEventListener("dragend", function (event) {
     // Enable camera controls if you have them
     if (controls) controls.enabled = true;
-    console.log("Dragging ended:", event.object.name || "Object");
+    calculatePositions(event.object);
   });
 }
 
 function distributeBottles() {
-  const bottles = [
+  bottles = [
     {
-      position: { x: -0.4, y: 0, z: 0 },
+      position: { x: -1.6, y: 0, z: -1 },
       color: "#0011FF",
+      name: "blue",
     },
     {
-      position: { x: -0.2, y: 0, z: 0 },
+      position: { x: -1.45, y: 0, z: -1 },
       color: "#15FF00",
+      name: "green",
     },
     {
-      position: { x: -0.0, y: 0, z: 0 },
+      position: {
+        x: -1.3,
+        y: 0,
+        z: -1,
+      },
       color: "#FDFF00",
+      name: "yellow",
     },
     {
-      position: { x: 0.2, y: 0, z: 0 },
+      position: { x: -1.15, y: 0, z: -1 },
       color: "#FF9A00",
+      name: "orange",
     },
     {
-      position: { x: 0.4, y: 0, z: 0 },
+      position: { x: -1, y: 0, z: -1 },
       color: "#FF0000",
+      name: "red",
     },
   ];
 
   bottles.forEach((bottle) => {
     loadBottle(bottle);
   });
+}
+
+//? Lógica del juego
+
+function calculatePositions(object) {
+  let movedBottleIndex = bottles.findIndex((bottle) =>
+    object.userData.name.includes(bottle.name)
+  );
+
+  bottles[movedBottleIndex].position.x = object.position.x;
+  bottles[movedBottleIndex].position.y = object.position.y;
+  bottles[movedBottleIndex].position.z = object.position.z;
+
+  bottles.sort((a, b) => a.position.x - b.position.x);
+
+  checkCorrectOrder();
+}
+
+function limitPositions(position) {
+  if (position.z < -0.01) {
+    maxX = -0.87;
+  } else {
+    maxX = 1.8;
+  }
+}
+
+function checkCorrectOrder() {
+  let colorOrder = ["red", "yellow", "blue", "orange", "green"];
+  let matchsNumber = 0;
+
+  bottles.forEach((bottle, i) => {
+    colorOrder.forEach((color, j) => {
+      if (bottle.name == color && i == j && bottle.position.z >= -0.01) {
+        matchsNumber += 1;
+      }
+    });
+  });
+
+  console.log(`${matchsNumber} aciertos!`);
 }
