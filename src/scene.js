@@ -4,9 +4,10 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DragControls } from "three/addons/controls/DragControls.js";
 
 const scene = new THREE.Scene();
+const canvas = document.getElementById("renderer");
 
 //? Renderer
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.setClearColor(0x0000000);
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -30,6 +31,8 @@ camera.rotation.set(
 );
 
 camera.lookAt(0, 0, 0);
+
+camera.aspect = window.innerWidth / window.innerHeight;
 
 //? Grid helper
 
@@ -330,3 +333,23 @@ function checkCorrectOrder() {
 
   console.log(`${matchsNumber} aciertos!`);
 }
+
+//? Controles del juego
+
+function openGuide() {
+  let dialog = document.getElementById("guide_dialog");
+
+  dialog.showModal();
+}
+
+openGuide();
+
+export function closeGuide() {
+  let dialog = document.getElementById("guide_dialog");
+  let button = document.getElementById("close_button");
+
+  button.addEventListener("click", (e) => {
+    dialog.close();
+  });
+}
+closeGuide();
