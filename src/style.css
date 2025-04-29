@@ -95,10 +95,61 @@ button:focus-visible {
   }
 }
 
+/* Loader */
+
+#loader_wrapper {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
+  z-index: 999999999;
+}
+
+/* From Uiverse.io by Shoh2008 */
+.loader {
+  width: 45px;
+  height: 40px;
+  background: linear-gradient(
+      #0000 calc(1 * 100% / 6),
+      #fff 0 calc(3 * 100% / 6),
+      #0000 0
+    ),
+    linear-gradient(
+      #0000 calc(2 * 100% / 6),
+      #fff 0 calc(4 * 100% / 6),
+      #0000 0
+    ),
+    linear-gradient(
+      #0000 calc(3 * 100% / 6),
+      #fff 0 calc(5 * 100% / 6),
+      #0000 0
+    );
+  background-size: 10px 400%;
+  background-repeat: no-repeat;
+  animation: matrix 1s infinite linear;
+}
+
+@keyframes matrix {
+  0% {
+    background-position: 0% 100%, 50% 100%, 100% 100%;
+  }
+
+  100% {
+    background-position: 0% 0%, 50% 0%, 100% 0%;
+  }
+}
+
+/* Estilos generales */
+
 .main_frame {
   position: absolute;
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 1rem;
   width: 100vw;
   /* height: 100%; */
   z-index: 1000;
@@ -117,6 +168,30 @@ dialog {
   background-color: black;
   position: absolute;
   z-index: 1000;
+}
+
+#guide_dialog {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#close_button {
+  align-self: self-end;
+}
+
+.guide_change {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+button {
+  padding: 0.5rem;
+  margin: 0;
+  height: fit-content;
+  width: fit-content;
 }
 
 #renderer {

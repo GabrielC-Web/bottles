@@ -3,6 +3,40 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DragControls } from "three/addons/controls/DragControls.js";
 
+//? loader
+
+let loaderWrapper = document.getElementById("loader_wrapper");
+
+let loaderShowing = false;
+
+function showLoader() {
+  loaderWrapper.style.display = "flex";
+  loaderShowing = true;
+}
+
+showLoader();
+
+function hideLoader() {
+  loaderWrapper.style.display = "none";
+  loaderShowing = false;
+}
+
+const manager = new THREE.LoadingManager();
+let object1Loaded = false;
+let object2Loaded = false;
+let object3Loaded = false;
+
+manager.onLoad = function () {
+  if (object1Loaded && object2Loaded && object3Loaded) {
+    // All three objects have loaded
+    console.log("All objects loaded!");
+    // Proceed with actions that require all objects to be loaded
+    hideLoader();
+  }
+};
+
+//? canvas
+
 const scene = new THREE.Scene();
 const canvas = document.getElementById("renderer");
 
@@ -149,6 +183,8 @@ function loadPlane() {
 
   groundMesh.position.set(-100, -100, 0);
   scene.add(groundMesh);
+  object1Loaded = true;
+  manager.onLoad();
 }
 
 function loadBottle(bottle) {
@@ -223,6 +259,8 @@ function loadTable() {
 
       gltf.scene.position.set(0, -100, 0);
       scene.add(gltf.scene);
+      object2Loaded = true;
+      manager.onLoad();
     },
     undefined,
     function (error) {
@@ -291,6 +329,9 @@ function distributeBottles() {
   bottles.forEach((bottle) => {
     loadBottle(bottle);
   });
+
+  object3Loaded = true;
+  manager.onLoad();
 }
 
 //? Lógica del juego
@@ -336,20 +377,72 @@ function checkCorrectOrder() {
 
 //? Controles del juego
 
-function openGuide() {
-  let dialog = document.getElementById("guide_dialog");
+let dialog = document.getElementById("guide_dialog");
 
+function openGuide() {
+  if (loaderShowing) {
+    return;
+  }
+  dialog.style.display = "flex";
   dialog.showModal();
 }
 
 openGuide();
 
-export function closeGuide() {
-  let dialog = document.getElementById("guide_dialog");
-  let button = document.getElementById("close_button");
+document.getElementById("open_button").addEventListener("click", (e) => {
+  openGuide();
+});
 
-  button.addEventListener("click", (e) => {
-    dialog.close();
-  });
+function closeGuide() {
+  dialog.style.display = "none";
+  dialog.close();
 }
-closeGuide();
+
+document.getElementById("close_button")?.addEventListener("click", (e) => {
+  closeGuide();
+});
+
+let guideIndex = 0;
+
+const guideParts = [
+  `<div>
+    <p>Bienvenida(o), este juego es bien sencillo. Debes adivinar el orden de los colores y acomodar las botellas según
+      corresponda el orden.
+    </p>
+  </div>`,
+  `<div>
+    <p>El puntaje final depende de la cantidad de intentos que te haya tomado conseguirlo!
+    </p>
+  </div>`,
+];
+
+document.getElementById("prev_button")?.addEventListener("click", (e) => {
+  if (guideIndex > 0) {
+    guideIndex--;
+  } else {
+    guideIndex = 0;
+  }
+  setHelpContent();
+});
+
+document.getElementById("next_button")?.addEventListener("click", (e) => {
+  if (guideIndex < guideParts.length - 1) {
+    guideIndex++;
+    setHelpContent();
+  } else {
+    closeGuide();
+  }
+});
+
+document.querySelector("#help_content").innerHTML = `
+  ${guideParts[guideIndex]}
+`;
+
+/**
+ * Actualiza el contenido del diálogo de ayuda
+ */
+function setHelpContent() {
+  let element = document.getElementById("help_content");
+
+  element.innerHTML = guideParts[guideIndex];
+}

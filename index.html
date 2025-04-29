@@ -10,16 +10,62 @@
 </head>
 
 <body>
+  <div id="loader_wrapper">
+    <div class="loader"></div>
+  </div>
   <div id="app"></div>
   <!-- <script type="module" src="/src/main.js"></script> -->
   <div class="main_frame">
     <h1>Acomoda los colores!</h1>
+
+    <!-- Mostrar tutorial -->
+    <button id="open_button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-info-icon lucide-info">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </svg>
+    </button>
   </div>
+
+  <!-- Diálogo informativo -->
   <dialog id="guide_dialog">
-    <button id="close_button">cerrar</button>
-    <p>Bienvenida(o), este juego es bien sencillo. Debes adivinar el orden de los colores y acomodar las botellas según
-      corresponda el orden.<br><br> El puntaje final depende de la cantidad de intentos que te haya tomado conseguirlo!
-    </p>
+
+    <!-- Cerrar -->
+    <button id="close_button"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-x-icon lucide-x">
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </svg>
+    </button>
+
+    <!-- Contenido dinámico -->
+    <div id="help_content"></div>
+
+    <div class="guide_change">
+
+      <!-- Previous -->
+      <button id="prev_button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-chevron-left-icon lucide-chevron-left">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+
+      <!-- Next -->
+      <button id="next_button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-chevron-right-icon lucide-chevron-right">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
+    </div>
+
   </dialog>
   <canvas id="renderer" style="max-width: 100%;"></canvas>
   <script type="module" src="/src/scene.js"></script>
