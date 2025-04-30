@@ -200,3 +200,37 @@ button {
   position: absolute;
   left: 0;
 }
+
+/* Notificaciones */
+
+.notifications {
+  z-index: 9999999;
+  position: absolute;
+  top: 90px;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  transition: all ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score_notification {
+  font-size: 2rem;
+  font-weight: bold;
+  animation: text;
+  animation-duration: 3s;
+}
+
+/* The animation code */
+@keyframes text {
+  0% {
+    font-size: 2rem;
+    opacity: 1;
+  }
+  100% {
+    font-size: 2.5rem;
+    opacity: 0;
+  }
+}

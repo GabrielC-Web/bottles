@@ -28,9 +28,6 @@ let object3Loaded = false;
 
 manager.onLoad = function () {
   if (object1Loaded && object2Loaded && object3Loaded) {
-    // All three objects have loaded
-    console.log("All objects loaded!");
-    // Proceed with actions that require all objects to be loaded
     hideLoader();
   }
 };
@@ -57,11 +54,11 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(-97.50289274085992, 147.53651249900219, 456.95360079934767);
+camera.position.set(-98.35374251518651, 143.65587899841853, 512.9849389396451);
 camera.rotation.set(
-  -0.3116052508897749,
-  0.019850784858688877,
-  0.006393398664596768
+  -0.2313118437861124,
+  0.0027790761414263395,
+  0.0006545480628923982
 );
 
 camera.lookAt(0, 0, 0);
@@ -102,19 +99,16 @@ const gltfLoader = new GLTFLoader();
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
-// controls.enabled = false;
+controls.enabled = false;
 
 //* Importante para cambiar el centro de la animación
-controls.target.set(
-  -105.78837752605038,
-  8.963502694206033,
-  -21.383158308688806
-);
+controls.target.set(-99.88510426648482, 17.32941556795639, -23.37041586849576);
 
 controls.addEventListener("change", () => {
   // This function will be called whenever the camera or target changes
   // console.log("Camera position:", camera.position);
   // console.log("Camera rotation:", camera.rotation);
+  // console.log("Camera target:", controls.target);
   // Perform actions based on the updated camera or target
 });
 
@@ -288,10 +282,42 @@ function setDragControls() {
 
   dragControls.addEventListener("dragend", function (event) {
     // Enable camera controls if you have them
-    if (controls) controls.enabled = true;
+    // if (controls) controls.enabled = true;
     calculatePositions(event.object);
   });
 }
+
+const baseBottlesState = [
+  {
+    position: { x: -1.6, y: 0, z: -0.66 },
+    color: "#0011FF",
+    name: "blue",
+  },
+  {
+    position: { x: -1.45, y: 0, z: -0.66 },
+    color: "#15FF00",
+    name: "green",
+  },
+  {
+    position: {
+      x: -1.3,
+      y: 0,
+      z: -0.66,
+    },
+    color: "#FDFF00",
+    name: "yellow",
+  },
+  {
+    position: { x: -1.15, y: 0, z: -0.66 },
+    color: "#FF9A00",
+    name: "orange",
+  },
+  {
+    position: { x: -1, y: 0, z: -0.66 },
+    color: "#FF0000",
+    name: "red",
+  },
+];
 
 function distributeBottles() {
   bottles = [
@@ -341,8 +367,6 @@ function calculatePositions(object) {
     object.userData.name.includes(bottle.name)
   );
 
-  console.log(object.position);
-
   bottles[movedBottleIndex].position.x = object.position.x;
   bottles[movedBottleIndex].position.y = object.position.y;
   bottles[movedBottleIndex].position.z = object.position.z;
@@ -360,6 +384,8 @@ function limitPositions(position) {
   }
 }
 
+let attempsNumber = 0;
+
 function checkCorrectOrder() {
   let colorOrder = ["red", "yellow", "blue", "orange", "green"];
   let matchsNumber = 0;
@@ -368,11 +394,20 @@ function checkCorrectOrder() {
     colorOrder.forEach((color, j) => {
       if (bottle.name == color && i == j && bottle.position.z >= -0.01) {
         matchsNumber += 1;
+        showHits(matchsNumber);
       }
     });
+
+    if (bottle.position.x >= -0.87 && attempsNumber < 5) {
+      attempsNumber += 1;
+    }
   });
 
-  console.log(`${matchsNumber} aciertos!`);
+  if (attempsNumber >= 5 && matchsNumber < 5) {
+    showDefeat();
+    attempsNumber = 0;
+    matchsNumber = 0;
+  }
 }
 
 //? Controles del juego
@@ -446,3 +481,68 @@ function setHelpContent() {
 
   element.innerHTML = guideParts[guideIndex];
 }
+
+function showHits(hitsAmount) {
+  let notesElement = document.getElementById("notifications");
+  notesElement.classList.remove("notifications");
+
+  notesElement.classList.add("notifications");
+
+  notesElement.innerHTML = `<span class="score_notification">Tienes ${hitsAmount} aciert${
+    hitsAmount > 1 ? "os" : "o"
+  }!</span>`;
+
+  let timeout = setTimeout(() => {
+    notesElement.classList.remove("notifications");
+    clearTimeout(timeout);
+  }, 3000);
+}
+
+function showDefeat() {
+  let notesElement = document.getElementById("notifications");
+  notesElement.classList.remove("notifications");
+  notesElement.classList.add("notifications");
+
+  notesElement.innerHTML = `<span class="">Sorry, bro, intenta de nuevo</span>`;
+
+  repositionBottles();
+}
+
+function repositionBottles() {
+  baseBottlesState.forEach((bottle) => {
+    let obj = scene.getObjectByUserDataProperty(
+      "name",
+      `${"bottle_" + bottle.name}`
+    );
+    obj.traverse((node) => {
+      if (node.isMesh) {
+        node.position.set(
+          bottle.position.x,
+          bottle.position.y,
+          bottle.position.z
+        );
+      }
+    });
+  });
+}
+
+/**
+ * Retorna el objeto que se busca por la propiedad
+ * @param {*} name
+ * @param {*} value
+ * @returns
+ */
+THREE.Object3D.prototype.getObjectByUserDataProperty = function (name, value) {
+  if (this.userData[name] === value) return this;
+
+  for (var i = 0, l = this.children.length; i < l; i++) {
+    var child = this.children[i];
+    var object = child.getObjectByUserDataProperty(name, value);
+
+    if (object !== undefined) {
+      return object;
+    }
+  }
+
+  return undefined;
+};
