@@ -384,29 +384,67 @@ function limitPositions(position) {
   }
 }
 
-let attempsNumber = 0;
+let attemps = 0;
 
 function checkCorrectOrder() {
+  /**
+   * Orden del color
+   */
   let colorOrder = ["red", "yellow", "blue", "orange", "green"];
+
+  /**
+   * Cantidad de matches
+   */
   let matchsNumber = 0;
 
+  /**
+   * La cantidad de botellas sobre la mesa
+   */
+  let bottlesInPosition = 0;
+
   bottles.forEach((bottle, i) => {
+    //* Veo cuántas están en posición
+    if (
+      bottle.position.x >= -0.87 &&
+      bottle.position.z >= -0.01 &&
+      bottlesInPosition < 5
+    ) {
+      bottlesInPosition += 1;
+    }
+
+    //* Veo cuántos matchs de posición hay
     colorOrder.forEach((color, j) => {
-      if (bottle.name == color && i == j && bottle.position.z >= -0.01) {
+      if (
+        bottle.name == color &&
+        i == j &&
+        bottle.position.x >= -0.87 &&
+        bottle.position.z >= -0.01
+      ) {
         matchsNumber += 1;
-        showHits(matchsNumber);
       }
     });
-
-    if (bottle.position.x >= -0.87 && attempsNumber < 5) {
-      attempsNumber += 1;
-    }
   });
 
-  if (attempsNumber >= 5 && matchsNumber < 5) {
+  // console.log(matchsNumber);
+
+  /**
+   * Cuento los intentos una vez que todas las botellas están en la mesa
+   */
+  if (bottlesInPosition == 5) {
+    attemps += 1;
+  }
+
+  /**
+   * Si supero gasto todos los intentos y no completé todos los matchs, entonces pierdo
+   */
+  if (attemps >= 5 && matchsNumber < 5) {
     showDefeat();
-    attempsNumber = 0;
+    attemps = 0;
     matchsNumber = 0;
+  } else if (bottlesInPosition == 5 && matchsNumber < 5) {
+    showHits(matchsNumber);
+  } else if (matchsNumber == 5) {
+    console.log("Ganaste!");
   }
 }
 
