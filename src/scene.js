@@ -116,6 +116,38 @@ controls.addEventListener("change", () => {
 //? Dragcontrols
 let draggableObjects = [];
 
+const baseBottlesState = [
+  {
+    position: { x: -1.6, y: 0, z: -0.66 },
+    color: "#0011FF",
+    name: "blue",
+  },
+  {
+    position: { x: -1.45, y: 0, z: -0.66 },
+    color: "#15FF00",
+    name: "green",
+  },
+  {
+    position: {
+      x: -1.3,
+      y: 0,
+      z: -0.66,
+    },
+    color: "#FDFF00",
+    name: "yellow",
+  },
+  {
+    position: { x: -1.15, y: 0, z: -0.66 },
+    color: "#FF9A00",
+    name: "orange",
+  },
+  {
+    position: { x: -1, y: 0, z: -0.66 },
+    color: "#FF0000",
+    name: "red",
+  },
+];
+
 let bottles = [];
 
 //* Límites de movimiento de las botellas
@@ -288,38 +320,6 @@ function setDragControls() {
   });
 }
 
-const baseBottlesState = [
-  {
-    position: { x: -1.6, y: 0, z: -0.66 },
-    color: "#0011FF",
-    name: "blue",
-  },
-  {
-    position: { x: -1.45, y: 0, z: -0.66 },
-    color: "#15FF00",
-    name: "green",
-  },
-  {
-    position: {
-      x: -1.3,
-      y: 0,
-      z: -0.66,
-    },
-    color: "#FDFF00",
-    name: "yellow",
-  },
-  {
-    position: { x: -1.15, y: 0, z: -0.66 },
-    color: "#FF9A00",
-    name: "orange",
-  },
-  {
-    position: { x: -1, y: 0, z: -0.66 },
-    color: "#FF0000",
-    name: "red",
-  },
-];
-
 function distributeBottles() {
   bottles = [
     {
@@ -362,6 +362,8 @@ function distributeBottles() {
 }
 
 //? Lógica del juego
+
+let gameLost = false;
 
 function calculatePositions(object) {
   let movedBottleIndex = bottles.findIndex((bottle) =>
@@ -415,6 +417,8 @@ function checkCorrectOrder() {
    */
   let bottlesInPosition = 0;
 
+  clearTimeout(timeout);
+
   bottles.forEach((bottle, i) => {
     //* Veo cuántas están en posición
     if (
@@ -450,10 +454,13 @@ function checkCorrectOrder() {
   /**
    * Si supero gasto todos los intentos y no completé todos los matchs, entonces pierdo
    */
-  if (attemps >= 15 && matchsNumber < 5) {
-    showDefeat();
+  if (attemps >= 2 && matchsNumber < 5) {
     attemps = 0;
     matchsNumber = 0;
+    gameLost = true;
+    bottlesInPosition = 0;
+    dragControls.enabled = false;
+    showDefeat();
   } else if (bottlesInPosition == 5 && matchsNumber < 5) {
     showHits(matchsNumber);
   } else if (matchsNumber == 5) {
@@ -466,6 +473,8 @@ function checkCorrectOrder() {
 //? Controles del juego
 
 let dialog = document.getElementById("guide_dialog");
+
+let timeout;
 
 function openGuide() {
   if (loaderShowing) {
@@ -535,36 +544,59 @@ function setHelpContent() {
   element.innerHTML = guideParts[guideIndex];
 }
 
-function showHits(hitsAmount) {
+function removeDialog() {
   let notesElement = document.getElementById("notifications");
   notesElement.classList.remove("notifications");
+}
 
+function showDialog() {
+  let notesElement = document.getElementById("notifications");
   notesElement.classList.add("notifications");
+}
+
+function showHits(hitsAmount) {
+  clearTimeout(timeout);
+  removeDialog();
+  showDialog();
+  let notesElement = document.getElementById("notifications");
 
   notesElement.innerHTML = `<span class="score_notification">Tienes ${hitsAmount} aciert${
     hitsAmount > 1 ? "os" : "o"
   }!</span>`;
 
-  let timeout = setTimeout(() => {
-    notesElement.classList.remove("notifications");
+  timeout = setTimeout(() => {
+    removeDialog();
     clearTimeout(timeout);
   }, 3000);
 }
 
 function showDefeat() {
+  removeDialog();
+  showDialog();
+
   let notesElement = document.getElementById("notifications");
-  notesElement.classList.remove("notifications");
-  notesElement.classList.add("notifications");
 
-  notesElement.innerHTML = `<span class="">Sorry, bro, intenta de nuevo</span>`;
+  notesElement.innerHTML = `<span class="victory_notification">Sorry, bro, intenta de nuevo</span> 
+  <button id="reload_button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw-icon lucide-rotate-cw"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+  </button>`;
 
-  repositionBottles();
+  document.getElementById("reload_button")?.addEventListener("click", (e) => {
+    dragControls.enabled = true;
+    gameLost = false;
+    console.log(baseBottlesState);
+
+    repositionBottles();
+    console.log(baseBottlesState);
+    randomizeColorOrder();
+    removeDialog();
+  });
 }
 
 function showVictory() {
+  removeDialog();
+  showDialog();
   let notesElement = document.getElementById("notifications");
-  notesElement.classList.remove("notifications");
-  notesElement.classList.add("notifications");
 
   notesElement.innerHTML = `<span class="victory_notification">Conseguiste la combinación! <br> Y solo te tomó ${attemps} intent${
     attemps > 1 ? "os" : "o"
@@ -575,18 +607,21 @@ function showVictory() {
 }
 
 function repositionBottles() {
-  baseBottlesState.forEach((bottle) => {
+  bottles = [...baseBottlesState];
+
+  bottles.forEach((bottle) => {
+    Object.freeze(bottle);
+
     let obj = scene.getObjectByUserDataProperty(
       "name",
       `${"bottle_" + bottle.name}`
     );
+
+    const position = bottle.position;
+
     obj.traverse((node) => {
       if (node.isMesh) {
-        node.position.set(
-          bottle.position.x,
-          bottle.position.y,
-          bottle.position.z
-        );
+        node.position.set(position.x, position.y, position.z);
       }
     });
   });
