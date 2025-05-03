@@ -29,6 +29,7 @@ let object3Loaded = false;
 manager.onLoad = function () {
   if (object1Loaded && object2Loaded && object3Loaded) {
     hideLoader();
+    randomizeColorOrder();
   }
 };
 
@@ -386,12 +387,24 @@ function limitPositions(position) {
 
 let attemps = 0;
 
-function checkCorrectOrder() {
-  /**
-   * Orden del color
-   */
-  let colorOrder = ["red", "yellow", "blue", "orange", "green"];
+let colorOrder = ["red", "yellow", "blue", "orange", "green"];
 
+function randomizeColorOrder() {
+  const shuffleArray = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = array[i];
+      array[i] = array[j];
+      array[j] = temp;
+    }
+
+    return array;
+  };
+
+  colorOrder = shuffleArray(colorOrder);
+}
+
+function checkCorrectOrder() {
   /**
    * Cantidad de matches
    */
@@ -437,14 +450,16 @@ function checkCorrectOrder() {
   /**
    * Si supero gasto todos los intentos y no completé todos los matchs, entonces pierdo
    */
-  if (attemps >= 5 && matchsNumber < 5) {
+  if (attemps >= 15 && matchsNumber < 5) {
     showDefeat();
     attemps = 0;
     matchsNumber = 0;
   } else if (bottlesInPosition == 5 && matchsNumber < 5) {
     showHits(matchsNumber);
   } else if (matchsNumber == 5) {
-    console.log("Ganaste!");
+    showVictory();
+    attemps = 0;
+    matchsNumber = 0;
   }
 }
 
@@ -544,6 +559,19 @@ function showDefeat() {
   notesElement.innerHTML = `<span class="">Sorry, bro, intenta de nuevo</span>`;
 
   repositionBottles();
+}
+
+function showVictory() {
+  let notesElement = document.getElementById("notifications");
+  notesElement.classList.remove("notifications");
+  notesElement.classList.add("notifications");
+
+  notesElement.innerHTML = `<span class="victory_notification">Conseguiste la combinación! <br> Y solo te tomó ${attemps} intent${
+    attemps > 1 ? "os" : "o"
+  }.</span>`;
+
+  repositionBottles();
+  randomizeColorOrder();
 }
 
 function repositionBottles() {

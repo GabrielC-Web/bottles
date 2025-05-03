@@ -226,6 +226,15 @@ button {
   animation-duration: 3s;
 }
 
+.victory_notification {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  animation: victory_text;
+  animation-duration: 3s;
+  animation-fill-mode: forwards;
+}
+
 /* The animation code */
 @keyframes text {
   0% {
@@ -235,5 +244,14 @@ button {
   100% {
     font-size: 2.5rem;
     opacity: 0;
+  }
+}
+
+@keyframes victory_text {
+  0% {
+    font-size: 2rem;
+  }
+  100% {
+    font-size: 2.5rem;
   }
 }
