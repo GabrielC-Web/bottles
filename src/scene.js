@@ -293,38 +293,6 @@ controls.addEventListener("change", () => {
 //? Dragcontrols
 let draggableObjects = [];
 
-const baseBottlesState = [
-  {
-    position: { x: -1.6, y: 0, z: -0.66 },
-    color: "#0011FF",
-    name: "blue",
-  },
-  {
-    position: { x: -1.45, y: 0, z: -0.66 },
-    color: "#15FF00",
-    name: "green",
-  },
-  {
-    position: {
-      x: -1.3,
-      y: 0,
-      z: -0.66,
-    },
-    color: "#FDFF00",
-    name: "yellow",
-  },
-  {
-    position: { x: -1.15, y: 0, z: -0.66 },
-    color: "#FF9A00",
-    name: "orange",
-  },
-  {
-    position: { x: -1, y: 0, z: -0.66 },
-    color: "#FF0000",
-    name: "red",
-  },
-];
-
 let bottles = [];
 
 //* Límites de movimiento de las botellas
@@ -443,7 +411,6 @@ function randomizeColorOrder() {
   };
 
   colorOrder = shuffleArray(colorOrder);
-  console.log(colorOrder);
 }
 
 /**
@@ -485,8 +452,6 @@ function checkCorrectOrder() {
     });
   });
 
-  // console.log(matchsNumber);
-
   /**
    * Cuento los intentos una vez que todas las botellas están en la mesa
    */
@@ -510,6 +475,7 @@ function checkCorrectOrder() {
     showVictory();
     attemps = 0;
     matchsNumber = 0;
+    bottlesInPosition = 0;
   }
 }
 
@@ -519,9 +485,7 @@ function checkCorrectOrder() {
 function resetGame() {
   dragControls.enabled = true;
   gameLost = false;
-  console.log(baseBottlesState);
   repositionBottles();
-  console.log(baseBottlesState);
   randomizeColorOrder();
 }
 
@@ -529,21 +493,49 @@ function resetGame() {
  * Coloca las botellas en su posición base
  */
 function repositionBottles() {
-  bottles = [...baseBottlesState];
+  let startX = -1.6;
 
-  bottles.forEach((bottle) => {
-    Object.freeze(bottle);
+  bottles = [
+    {
+      position: { x: -1.6, y: 0, z: -0.66 },
+      color: "#0011FF",
+      name: "blue",
+    },
+    {
+      position: { x: -1.45, y: 0, z: -0.66 },
+      color: "#15FF00",
+      name: "green",
+    },
+    {
+      position: {
+        x: -1.3,
+        y: 0,
+        z: -0.66,
+      },
+      color: "#FDFF00",
+      name: "yellow",
+    },
+    {
+      position: { x: -1.15, y: 0, z: -0.66 },
+      color: "#FF9A00",
+      name: "orange",
+    },
+    {
+      position: { x: -1, y: 0, z: -0.66 },
+      color: "#FF0000",
+      name: "red",
+    },
+  ];
 
+  bottles.forEach((bottle, i) => {
     let obj = scene.getObjectByUserDataProperty(
       "name",
       `${"bottle_" + bottle.name}`
     );
 
-    const position = bottle.position;
-
     obj.traverse((node) => {
       if (node.isMesh) {
-        node.position.set(position.x, position.y, position.z);
+        node.position.set(startX + 0.15 * i, 0, -0.66);
       }
     });
   });
