@@ -74,6 +74,29 @@ const divisions = 30;
 // const gridHelper = new THREE.GridHelper(size, divisions);
 // scene.add(gridHelper);
 
+//? Custom functions
+
+/**
+ * Retorna el objeto que se busca por la propiedad
+ * @param {*} name
+ * @param {*} value
+ * @returns
+ */
+THREE.Object3D.prototype.getObjectByUserDataProperty = function (name, value) {
+  if (this.userData[name] === value) return this;
+
+  for (var i = 0, l = this.children.length; i < l; i++) {
+    var child = this.children[i];
+    var object = child.getObjectByUserDataProperty(name, value);
+
+    if (object !== undefined) {
+      return object;
+    }
+  }
+
+  return undefined;
+};
+
 //? Light
 // Create an AmbientLight
 const ambientLight = new THREE.AmbientLight(0xf1f1f1); // Soft white light
@@ -84,7 +107,7 @@ spotLight.castShadow = true;
 // spotLight.shadow.bias = -0.0001;
 scene.add(spotLight, ambientLight);
 
-//? helper
+//? light helper
 
 const lightHelper = new THREE.PointLightHelper(spotLight);
 
@@ -96,7 +119,161 @@ const lightHelper = new THREE.PointLightHelper(spotLight);
 //? Model
 const gltfLoader = new GLTFLoader();
 
-//? Control
+/**
+ * Genera el plano
+ */
+function loadPlane() {
+  const groundGeometry = new THREE.PlaneGeometry(500, 200, 32, 32);
+  const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0x555555,
+    side: THREE.DoubleSide,
+  });
+  groundGeometry.rotateX(-Math.PI / 2);
+  const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+
+  groundMesh.castShadow = false;
+  groundMesh.receiveShadow = true;
+
+  groundMesh.position.set(-100, -100, 0);
+  scene.add(groundMesh);
+  object1Loaded = true;
+  manager.onLoad();
+}
+
+/**
+ * Genera las botellas
+ * @param {} bottle
+ */
+function loadBottle(bottle) {
+  gltfLoader.load(
+    "public/plastic_bottle/scene.gltf",
+    function (gltf) {
+      const model = gltf.scene;
+
+      // Traverse all materials in the model
+      model.traverse((node) => {
+        if (node.isMesh && node.material) {
+          // Check if the material is an array (for multi-materials)
+          const materials = Array.isArray(node.material)
+            ? node.material
+            : [node.material];
+
+          node.castShadow = true;
+          node.receiveShadow = true;
+
+          materials.forEach((material) => {
+            // If the material has a color property (e.g., MeshStandardMaterial, MeshBasicMaterial)
+            if (material.color) {
+              material.color.set(bottle.color); // Change to red (you can use any valid color value)
+            }
+            // For materials with emissive properties
+            if (material.emissive) {
+              material.emissive.set(bottle.color); // Change emissive color to blue
+            }
+          });
+
+          //* Oculto la tapa
+          if (node.userData.name == "Bottle_Bottle2_0") {
+            node.visible = false;
+          } else {
+            node.userData.name = `bottle_${bottle.name}`;
+          }
+
+          //* Seteo la posición inicial
+          node.position.x = bottle.position.x;
+          node.position.y = bottle.position.y;
+          node.position.z = bottle.position.z;
+        }
+      });
+
+      model.userData.name = `bottle_${bottle.name}`;
+
+      model.scale.set(150, 150, 150);
+
+      draggableObjects.push(model);
+
+      // model.position.x = 0;
+      scene.add(model);
+    },
+    undefined,
+    function (error) {
+      console.error(error);
+    }
+  );
+}
+
+/**
+ * Genera la mesa
+ */
+function loadTable() {
+  //* Load table
+  gltfLoader.load(
+    "public/table/scene.gltf",
+    function (gltf) {
+      gltf.scene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
+      gltf.scene.position.set(0, -100, 0);
+      scene.add(gltf.scene);
+      object2Loaded = true;
+      manager.onLoad();
+    },
+    undefined,
+    function (error) {
+      console.error(error);
+    }
+  );
+}
+
+/**
+ * Distribuye las botellas inicialmente
+ */
+function loadDistributedBottles() {
+  bottles = [
+    {
+      position: { x: -1.6, y: 0, z: -0.66 },
+      color: "#0011FF",
+      name: "blue",
+    },
+    {
+      position: { x: -1.45, y: 0, z: -0.66 },
+      color: "#15FF00",
+      name: "green",
+    },
+    {
+      position: {
+        x: -1.3,
+        y: 0,
+        z: -0.66,
+      },
+      color: "#FDFF00",
+      name: "yellow",
+    },
+    {
+      position: { x: -1.15, y: 0, z: -0.66 },
+      color: "#FF9A00",
+      name: "orange",
+    },
+    {
+      position: { x: -1, y: 0, z: -0.66 },
+      color: "#FF0000",
+      name: "red",
+    },
+  ];
+
+  bottles.forEach((bottle) => {
+    loadBottle(bottle);
+  });
+
+  object3Loaded = true;
+  manager.onLoad();
+}
+
+//? Orbit control
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
@@ -166,136 +343,9 @@ const dragControls = new DragControls(
   renderer.domElement
 );
 
-//? Raycasting
-
-// const raycaster = new THREE.Raycaster();
-// const origin = new THREE.Vector3(0, 0, 0); // Position to check
-// const direction = new THREE.Vector3(0, 0, -1); // Adjust direction if needed
-// direction.normalize();
-
-// raycaster.set(origin, direction);
-
-// const intersectedObjects = raycaster.intersectObjects(scene.children);
-
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-
-loadPlane();
-loadTable();
-distributeBottles();
-setDragControls();
-animate();
-
-// 5. Handle window resizing (same as before)
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-function loadPlane() {
-  const groundGeometry = new THREE.PlaneGeometry(500, 200, 32, 32);
-  const groundMaterial = new THREE.MeshStandardMaterial({
-    color: 0x555555,
-    side: THREE.DoubleSide,
-  });
-  groundGeometry.rotateX(-Math.PI / 2);
-  const groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-
-  groundMesh.castShadow = false;
-  groundMesh.receiveShadow = true;
-
-  groundMesh.position.set(-100, -100, 0);
-  scene.add(groundMesh);
-  object1Loaded = true;
-  manager.onLoad();
-}
-
-function loadBottle(bottle) {
-  gltfLoader.load(
-    "public/plastic_bottle/scene.gltf",
-    function (gltf) {
-      const model = gltf.scene;
-
-      // Traverse all materials in the model
-      model.traverse((node) => {
-        if (node.isMesh && node.material) {
-          // Check if the material is an array (for multi-materials)
-          const materials = Array.isArray(node.material)
-            ? node.material
-            : [node.material];
-
-          node.castShadow = true;
-          node.receiveShadow = true;
-
-          materials.forEach((material) => {
-            // If the material has a color property (e.g., MeshStandardMaterial, MeshBasicMaterial)
-            if (material.color) {
-              material.color.set(bottle.color); // Change to red (you can use any valid color value)
-            }
-            // For materials with emissive properties
-            if (material.emissive) {
-              material.emissive.set(bottle.color); // Change emissive color to blue
-            }
-          });
-
-          //* Oculto la tapa
-          if (node.userData.name == "Bottle_Bottle2_0") {
-            node.visible = false;
-          } else {
-            node.userData.name = `bottle_${bottle.name}`;
-          }
-
-          //* Seteo la posición inicial
-          node.position.x = bottle.position.x;
-          node.position.y = bottle.position.y;
-          node.position.z = bottle.position.z;
-        }
-      });
-
-      model.userData.name = `bottle_${bottle.name}`;
-
-      model.scale.set(150, 150, 150);
-
-      draggableObjects.push(model);
-
-      // model.position.x = 0;
-      scene.add(model);
-    },
-    undefined,
-    function (error) {
-      console.error(error);
-    }
-  );
-}
-
-function loadTable() {
-  //* Load table
-  gltfLoader.load(
-    "public/table/scene.gltf",
-    function (gltf) {
-      gltf.scene.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      gltf.scene.position.set(0, -100, 0);
-      scene.add(gltf.scene);
-      object2Loaded = true;
-      manager.onLoad();
-    },
-    undefined,
-    function (error) {
-      console.error(error);
-    }
-  );
-}
-
+/**
+ * Limita el uso del drag and drop
+ */
 function setDragControls() {
   // Optional: Add event listeners for drag start and end
   dragControls.addEventListener("dragstart", function (event) {
@@ -320,51 +370,33 @@ function setDragControls() {
   });
 }
 
-function distributeBottles() {
-  bottles = [
-    {
-      position: { x: -1.6, y: 0, z: -0.66 },
-      color: "#0011FF",
-      name: "blue",
-    },
-    {
-      position: { x: -1.45, y: 0, z: -0.66 },
-      color: "#15FF00",
-      name: "green",
-    },
-    {
-      position: {
-        x: -1.3,
-        y: 0,
-        z: -0.66,
-      },
-      color: "#FDFF00",
-      name: "yellow",
-    },
-    {
-      position: { x: -1.15, y: 0, z: -0.66 },
-      color: "#FF9A00",
-      name: "orange",
-    },
-    {
-      position: { x: -1, y: 0, z: -0.66 },
-      color: "#FF0000",
-      name: "red",
-    },
-  ];
-
-  bottles.forEach((bottle) => {
-    loadBottle(bottle);
-  });
-
-  object3Loaded = true;
-  manager.onLoad();
+//? load animation
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
 }
+
+loadPlane();
+loadTable();
+loadDistributedBottles();
+setDragControls();
+animate();
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
 //? Lógica del juego
 
 let gameLost = false;
 
+/**
+ * Analiza la posición de cada botella
+ * @param {*} object
+ */
 function calculatePositions(object) {
   let movedBottleIndex = bottles.findIndex((bottle) =>
     object.userData.name.includes(bottle.name)
@@ -379,6 +411,10 @@ function calculatePositions(object) {
   checkCorrectOrder();
 }
 
+/**
+ * Limita las coordenadas de drag and drop a las que puedo llegar
+ * @param {*} position
+ */
 function limitPositions(position) {
   if (position.z < -0.01) {
     maxX = -0.87;
@@ -391,6 +427,9 @@ let attemps = 0;
 
 let colorOrder = ["red", "yellow", "blue", "orange", "green"];
 
+/**
+ * Cambia la secuencia de colores que debo adivinar
+ */
 function randomizeColorOrder() {
   const shuffleArray = (array) => {
     for (let i = array.length - 1; i > 0; i--) {
@@ -404,8 +443,12 @@ function randomizeColorOrder() {
   };
 
   colorOrder = shuffleArray(colorOrder);
+  console.log(colorOrder);
 }
 
+/**
+ * Verifica que las botellas estén en el orden correcto
+ */
 function checkCorrectOrder() {
   /**
    * Cantidad de matches
@@ -454,7 +497,7 @@ function checkCorrectOrder() {
   /**
    * Si supero gasto todos los intentos y no completé todos los matchs, entonces pierdo
    */
-  if (attemps >= 2 && matchsNumber < 5) {
+  if (attemps >= 200 && matchsNumber < 5) {
     attemps = 0;
     matchsNumber = 0;
     gameLost = true;
@@ -470,142 +513,21 @@ function checkCorrectOrder() {
   }
 }
 
-//? Controles del juego
-
-let dialog = document.getElementById("guide_dialog");
-
-let timeout;
-
-function openGuide() {
-  if (loaderShowing) {
-    return;
-  }
-  dialog.style.display = "flex";
-  dialog.showModal();
-}
-
-openGuide();
-
-document.getElementById("open_button").addEventListener("click", (e) => {
-  openGuide();
-});
-
-function closeGuide() {
-  dialog.style.display = "none";
-  dialog.close();
-}
-
-document.getElementById("close_button")?.addEventListener("click", (e) => {
-  closeGuide();
-});
-
-let guideIndex = 0;
-
-const guideParts = [
-  `<div>
-    <p>Bienvenida(o), este juego es bien sencillo. Debes adivinar el orden de los colores y acomodar las botellas según
-      corresponda el orden.
-    </p>
-  </div>`,
-  `<div>
-    <p>El puntaje final depende de la cantidad de intentos que te haya tomado conseguirlo!
-    </p>
-  </div>`,
-];
-
-document.getElementById("prev_button")?.addEventListener("click", (e) => {
-  if (guideIndex > 0) {
-    guideIndex--;
-  } else {
-    guideIndex = 0;
-  }
-  setHelpContent();
-});
-
-document.getElementById("next_button")?.addEventListener("click", (e) => {
-  if (guideIndex < guideParts.length - 1) {
-    guideIndex++;
-    setHelpContent();
-  } else {
-    closeGuide();
-  }
-});
-
-document.querySelector("#help_content").innerHTML = `
-  ${guideParts[guideIndex]}
-`;
-
 /**
- * Actualiza el contenido del diálogo de ayuda
+ * Resetea el juego
  */
-function setHelpContent() {
-  let element = document.getElementById("help_content");
-
-  element.innerHTML = guideParts[guideIndex];
-}
-
-function removeDialog() {
-  let notesElement = document.getElementById("notifications");
-  notesElement.classList.remove("notifications");
-}
-
-function showDialog() {
-  let notesElement = document.getElementById("notifications");
-  notesElement.classList.add("notifications");
-}
-
-function showHits(hitsAmount) {
-  clearTimeout(timeout);
-  removeDialog();
-  showDialog();
-  let notesElement = document.getElementById("notifications");
-
-  notesElement.innerHTML = `<span class="score_notification">Tienes ${hitsAmount} aciert${
-    hitsAmount > 1 ? "os" : "o"
-  }!</span>`;
-
-  timeout = setTimeout(() => {
-    removeDialog();
-    clearTimeout(timeout);
-  }, 3000);
-}
-
-function showDefeat() {
-  removeDialog();
-  showDialog();
-
-  let notesElement = document.getElementById("notifications");
-
-  notesElement.innerHTML = `<span class="victory_notification">Sorry, bro, intenta de nuevo</span> 
-  <button id="reload_button">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw-icon lucide-rotate-cw"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-  </button>`;
-
-  document.getElementById("reload_button")?.addEventListener("click", (e) => {
-    dragControls.enabled = true;
-    gameLost = false;
-    console.log(baseBottlesState);
-
-    repositionBottles();
-    console.log(baseBottlesState);
-    randomizeColorOrder();
-    removeDialog();
-  });
-}
-
-function showVictory() {
-  removeDialog();
-  showDialog();
-  let notesElement = document.getElementById("notifications");
-
-  notesElement.innerHTML = `<span class="victory_notification">Conseguiste la combinación! <br> Y solo te tomó ${attemps} intent${
-    attemps > 1 ? "os" : "o"
-  }.</span>`;
-
+function resetGame() {
+  dragControls.enabled = true;
+  gameLost = false;
+  console.log(baseBottlesState);
   repositionBottles();
+  console.log(baseBottlesState);
   randomizeColorOrder();
 }
 
+/**
+ * Coloca las botellas en su posición base
+ */
 function repositionBottles() {
   bottles = [...baseBottlesState];
 
@@ -627,23 +549,170 @@ function repositionBottles() {
   });
 }
 
+//? Diálogos
+
 /**
- * Retorna el objeto que se busca por la propiedad
- * @param {*} name
- * @param {*} value
+ * Diálogo de guía
+ */
+let dialog = document.getElementById("guide_dialog");
+
+/**
+ * Timeout para cierre del mensaje de aciertos
+ */
+let timeout;
+
+/**
+ * Índice de la guía del diálogo
+ */
+let guideIndex = 0;
+
+/**
+ * Partes de la guía del diálogo
+ */
+const guideParts = [
+  `<div>
+    <p>Bienvenida(o), este juego es bien sencillo. Debes adivinar el orden de los colores y acomodar las botellas según
+      corresponda el orden.
+    </p>
+  </div>`,
+  `<div>
+    <p>El puntaje final depende de la cantidad de intentos que te haya tomado conseguirlo!
+    </p>
+  </div>`,
+];
+
+/**
+ * Setea el HTML de la guía
+ */
+document.querySelector("#help_content").innerHTML = `
+  ${guideParts[guideIndex]}
+`;
+
+/**
+ * Abre la guía
  * @returns
  */
-THREE.Object3D.prototype.getObjectByUserDataProperty = function (name, value) {
-  if (this.userData[name] === value) return this;
-
-  for (var i = 0, l = this.children.length; i < l; i++) {
-    var child = this.children[i];
-    var object = child.getObjectByUserDataProperty(name, value);
-
-    if (object !== undefined) {
-      return object;
-    }
+function openGuide() {
+  if (loaderShowing) {
+    return;
   }
+  dialog.style.display = "flex";
+  dialog.showModal();
+}
 
-  return undefined;
-};
+/**
+ * Cierra la guía
+ */
+function closeGuide() {
+  dialog.style.display = "none";
+  dialog.close();
+}
+
+//* Por defecto empieza abierta
+openGuide();
+
+/**
+ * Actualiza el contenido del diálogo de ayuda
+ */
+function setHelpContent() {
+  let element = document.getElementById("help_content");
+
+  element.innerHTML = guideParts[guideIndex];
+}
+
+function removeDialog() {
+  let notesElement = document.getElementById("notifications");
+  notesElement.classList.remove("notifications");
+}
+
+function showDialog() {
+  let notesElement = document.getElementById("notifications");
+  notesElement.classList.add("notifications");
+}
+
+/**
+ * Diálogo de aciertos
+ * @param {*} hitsAmount
+ */
+function showHits(hitsAmount) {
+  clearTimeout(timeout);
+  removeDialog();
+  showDialog();
+  let notesElement = document.getElementById("notifications");
+
+  notesElement.innerHTML = `<span class="score_notification">Tienes ${hitsAmount} aciert${
+    hitsAmount > 1 ? "os" : "o"
+  }!</span>`;
+
+  timeout = setTimeout(() => {
+    removeDialog();
+    clearTimeout(timeout);
+  }, 3000);
+}
+
+/**
+ * Diálogo de derrota
+ */
+function showDefeat() {
+  removeDialog();
+  showDialog();
+
+  let notesElement = document.getElementById("notifications");
+
+  notesElement.innerHTML = `<span class="victory_notification">Sorry, bro, intenta de nuevo</span> 
+  <button id="reload_button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw-icon lucide-rotate-cw"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+  </button>`;
+
+  document.getElementById("reload_button")?.addEventListener("click", (e) => {
+    resetGame();
+    removeDialog();
+  });
+}
+
+/**
+ * Diálogo de victoria
+ */
+function showVictory() {
+  removeDialog();
+  showDialog();
+  let notesElement = document.getElementById("notifications");
+
+  notesElement.innerHTML = `<span class="victory_notification">Conseguiste la combinación! <br> Y solo te tomó ${attemps} intent${
+    attemps > 1 ? "os" : "o"
+  }.</span> 
+  <button id="reload_button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-cw-icon lucide-rotate-cw"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+  </button>`;
+
+  document.getElementById("reload_button")?.addEventListener("click", (e) => {
+    resetGame();
+    removeDialog();
+  });
+}
+//? Listeners de botones
+document.getElementById("open_button").addEventListener("click", (e) => {
+  openGuide();
+});
+
+document.getElementById("close_button")?.addEventListener("click", (e) => {
+  closeGuide();
+});
+
+document.getElementById("prev_button")?.addEventListener("click", (e) => {
+  if (guideIndex > 0) {
+    guideIndex--;
+  } else {
+    guideIndex = 0;
+  }
+  setHelpContent();
+});
+
+document.getElementById("next_button")?.addEventListener("click", (e) => {
+  if (guideIndex < guideParts.length - 1) {
+    guideIndex++;
+    setHelpContent();
+  } else {
+    closeGuide();
+  }
+});
