@@ -157,7 +157,7 @@ button:focus-visible {
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 3rem;
 }
 
 dialog {
@@ -175,6 +175,10 @@ dialog {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  border: none;
+  border: 1px solid black;
+  border-radius: 8px;
+  background-color: #213547;
 }
 
 #close_button {
@@ -254,5 +258,11 @@ button {
   }
   100% {
     font-size: 2.5rem;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  h1 {
+    font-size: 2rem;
   }
 }

@@ -41,7 +41,7 @@ const canvas = document.getElementById("renderer");
 //? Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(0x0000000);
+renderer.setClearColor(0x213547);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
@@ -49,8 +49,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 //? Camera
+let fov = window.innerWidth > 900 ? 45 : 80;
 const camera = new THREE.PerspectiveCamera(
-  45,
+  fov,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
@@ -563,12 +564,16 @@ let guideIndex = 0;
  */
 const guideParts = [
   `<div>
-    <p>Bienvenida(o), este juego es bien sencillo. Debes adivinar el orden de los colores y acomodar las botellas según
+    <p>Hello there, este juego es bien sencillo. Debes adivinar el orden de los colores y acomodar las botellas según
       corresponda el orden.
     </p>
   </div>`,
   `<div>
     <p>El puntaje final depende de la cantidad de intentos que te haya tomado conseguirlo!
+    </p>
+  </div>`,
+  `<div>
+    <p>Debes colocar todas las botellas sobre la mesa para empezar a jugar
     </p>
   </div>`,
 ];
