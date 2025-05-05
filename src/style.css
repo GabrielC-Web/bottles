@@ -33,6 +33,7 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: #213547;
 }
 
 #app {
@@ -227,6 +228,7 @@ button {
 .score_notification {
   font-size: 2rem;
   font-weight: bold;
+  color: #213547;
   animation: text;
   animation-duration: 3s;
 }
@@ -235,6 +237,7 @@ button {
   font-size: 2rem;
   font-weight: bold;
   text-align: center;
+  color: #213547;
   animation: victory_text;
   animation-duration: 3s;
   animation-fill-mode: forwards;

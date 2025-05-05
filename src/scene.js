@@ -48,6 +48,26 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
+//? Texture
+
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load(
+  "public/bottles_pattern_colors.jpg", // Replace with the actual path to your image
+  (texture) => {
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(6, 6); // Adjust the number of repetitions (width, height)
+
+    scene.background = texture;
+  },
+  (xhr) => {
+    console.log((xhr.loaded / xhr.total) * 100 + "% loaded"); // Optional: Show loading progress
+  },
+  (err) => {
+    console.error("An error happened loading the texture.");
+  }
+);
+
 //? Camera
 let fov = window.innerWidth > 900 ? 45 : 80;
 const camera = new THREE.PerspectiveCamera(
