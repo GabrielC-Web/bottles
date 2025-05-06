@@ -11,7 +11,6 @@
   "devDependencies": {
     "vite": "^6.3.2"
   },
-  "packageManager": "pnpm@9.15.5+sha256.8472168c3e1fd0bff287e694b053fccbbf20579a3ff9526b6333beab8df65a8d",
   "dependencies": {
     "three": "^0.175.0"
   }

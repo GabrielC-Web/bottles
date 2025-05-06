@@ -64,6 +64,8 @@ textureLoader.load(
     console.log((xhr.loaded / xhr.total) * 100 + "% loaded"); // Optional: Show loading progress
   },
   (err) => {
+    console.log(err);
+
     console.error("An error happened loading the texture.");
   }
 );
