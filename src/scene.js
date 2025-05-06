@@ -52,7 +52,7 @@ document.body.appendChild(renderer.domElement);
 
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load(
-  "/bottles_pattern_colors.jpg", // Replace with the actual path to your image
+  "./bottles_pattern_colors.jpg", // Replace with the actual path to your image
   (texture) => {
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -169,7 +169,7 @@ function loadPlane() {
  */
 function loadBottle(bottle) {
   gltfLoader.load(
-    "/plastic_bottle/scene.gltf",
+    "./plastic_bottle/scene.gltf",
     function (gltf) {
       const model = gltf.scene;
 
@@ -231,7 +231,7 @@ function loadBottle(bottle) {
 function loadTable() {
   //* Load table
   gltfLoader.load(
-    "/table/scene.gltf",
+    "./table/scene.gltf",
     function (gltf) {
       gltf.scene.traverse((child) => {
         if (child.isMesh) {
