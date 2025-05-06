@@ -53,6 +53,3 @@ jobs:
         id: set_custom_url
         run: |
           echo "page_url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/assets/" >> $GITHUB_OUTPUT
-
-      - name: Use the page URL
-        run: echo "Deployed to: ${{ steps.set_custom_url.outputs.page_url }}"
