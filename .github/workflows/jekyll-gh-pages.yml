@@ -49,7 +49,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Set custom page URL output
-        id: set_custom_url
-        run: |
-          echo "page_url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/assets/" >> $GITHUB_OUTPUT

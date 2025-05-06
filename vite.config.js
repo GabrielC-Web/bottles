@@ -2,5 +2,5 @@
  * @type {import('vite').UserConfig}
  */
 export default {
-  base: process.env.NODE_ENV === "production" ? "/bottles/assets/" : "",
+  base: process.env.NODE_ENV === "production" ? "/bottles/" : "",
 };
