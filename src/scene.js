@@ -9,6 +9,9 @@ let loaderWrapper = document.getElementById("loader_wrapper");
 
 let loaderShowing = false;
 
+/**
+ * Muestra el loader
+ */
 function showLoader() {
   loaderWrapper.style.display = "flex";
   loaderShowing = true;
@@ -16,6 +19,9 @@ function showLoader() {
 
 showLoader();
 
+/**
+ * Oculta el loader
+ */
 function hideLoader() {
   loaderWrapper.style.display = "none";
   loaderShowing = false;
@@ -26,6 +32,9 @@ let object1Loaded = false;
 let object2Loaded = false;
 let object3Loaded = false;
 
+/**
+ * Oculta el loader y randomiza los colores cuando todo termina de cargar
+ */
 manager.onLoad = function () {
   if (object1Loaded && object2Loaded && object3Loaded) {
     hideLoader();
@@ -41,7 +50,7 @@ const canvas = document.getElementById("renderer");
 //? Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.setClearColor(0x213547);
+renderer.setClearColor(0x0000000);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
@@ -50,30 +59,31 @@ document.body.appendChild(renderer.domElement);
 
 //? Texture
 
-const textureLoader = new THREE.TextureLoader();
-textureLoader.load(
-  "./bottles_pattern_colors.jpg", // Replace with the actual path to your image
-  (texture) => {
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(6, 6); // Adjust the number of repetitions (width, height)
+// const textureLoader = new THREE.TextureLoader();
+// textureLoader.load(
+//   "./bottles_pattern_colors.jpg", // Replace with the actual path to your image
+//   (texture) => {
+//     texture.wrapS = THREE.RepeatWrapping;
+//     texture.wrapT = THREE.RepeatWrapping;
+//     texture.repeat.set(6, 6); // Adjust the number of repetitions (width, height)
+//     texture.opacity = 0.5;
 
-    scene.background = texture;
-  },
-  (xhr) => {
-    console.log((xhr.loaded / xhr.total) * 100 + "% loaded"); // Optional: Show loading progress
-  },
-  (err) => {
-    console.log(err);
+//     scene.background = texture;
+//   },
+//   (xhr) => {
+//     console.log((xhr.loaded / xhr.total) * 100 + "% loaded"); // Optional: Show loading progress
+//   },
+//   (err) => {
+//     console.log(err);
 
-    console.error("An error happened loading the texture.");
-  }
-);
+//     console.error("An error happened loading the texture.");
+//   }
+// );
 
 //? Camera
 let fov = window.innerWidth > 900 ? 45 : 80;
 const camera = new THREE.PerspectiveCamera(
-  fov,
+  50,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
@@ -375,9 +385,18 @@ setDragControls();
 animate();
 
 window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const needResize =
+    window.innerWidth !== width || window.innerHeight !== height;
+  if (needResize) {
+    const aspectRatio = width / height;
+    console.log(aspectRatio);
+    camera.fov = 50;
+    camera.aspect = aspectRatio;
+    renderer.setSize(width, height);
+    camera.updateProjectionMatrix();
+  }
 });
 
 //? Lógica del juego
@@ -642,6 +661,7 @@ function setHelpContent() {
 function removeDialog() {
   let notesElement = document.getElementById("notifications");
   notesElement.classList.remove("notifications");
+  notesElement.classList.remove("final_notification");
 }
 
 function showDialog() {
@@ -696,6 +716,8 @@ function showVictory() {
   removeDialog();
   showDialog();
   let notesElement = document.getElementById("notifications");
+
+  notesElement.classList.add("final_notification");
 
   notesElement.innerHTML = `<span class="victory_notification">Conseguiste la combinación! <br> Y solo te tomó ${attemps} intent${
     attemps > 1 ? "os" : "o"
